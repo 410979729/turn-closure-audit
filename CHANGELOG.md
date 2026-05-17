@@ -10,6 +10,7 @@ All notable changes to `turn-closure-audit` will be documented in this file.
 - Kept Hermes' unpacked plugin entrypoint while adding a cleaner package import surface for wheel smoke tests.
 
 ### Added
+- Added `SECURITY.md` and made the release gate require it in both the source tree and wheel payload.
 - Added `scripts/check.release.py` to enforce release docs, stable metadata, generated-artifact cleanup, tests, wheel payload inspection, and temp-install import smoke.
 
 ## [2.4.1] - 2026-05-12

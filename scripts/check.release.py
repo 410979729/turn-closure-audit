@@ -18,6 +18,7 @@ REQUIRED_ROOT_FILES = [
     "CHANGELOG.md",
     "CONTRIBUTING.md",
     "LICENSE",
+    "SECURITY.md",
     "plugin.yaml",
     "pyproject.toml",
 ]
@@ -121,7 +122,7 @@ def main():
     bad_wheel = [name for name in names if "__pycache__" in name or name.endswith(".pyc")]
     if bad_wheel:
         fail("wheel contains cache artifacts", bad_wheel)
-    for expected in ["turn_closure_audit/__init__.py", "turn_closure_audit/runtime.py", "plugin.yaml", "README.md", "DESIGN.md", "CHANGELOG.md", "docs/architecture.md"]:
+    for expected in ["turn_closure_audit/__init__.py", "turn_closure_audit/runtime.py", "plugin.yaml", "README.md", "DESIGN.md", "CHANGELOG.md", "SECURITY.md", "docs/architecture.md"]:
         if not has_payload(expected):
             fail("wheel missing expected payload", expected)
 

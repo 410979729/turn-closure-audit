@@ -33,7 +33,7 @@ package-dir = {"turn_closure_audit" = "."}
 "*" = ["LICENSE"]
 
 [tool.setuptools.data-files]
-"" = ["plugin.yaml", "README.md", "DESIGN.md", "CHANGELOG.md"]
+"" = ["plugin.yaml", "README.md", "DESIGN.md", "CHANGELOG.md", "SECURITY.md"]
 "docs" = ["docs/*.md"]
 
 [tool.pytest.ini_options]
