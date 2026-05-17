@@ -3,8 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from hermes_constants import get_hermes_home
-
+from .paths import get_hermes_home
 from .redaction import preview
 
 WRITE_TOOLS = {"memory", "hindsight_retain", "skill_manage", "write_file", "patch"}
