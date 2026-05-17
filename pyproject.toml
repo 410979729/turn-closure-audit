@@ -1,0 +1,40 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "turn-closure-audit"
+version = "2.5.0"
+description = "Hermes plugin that records per-turn closure judgments and conservative audit sinks."
+readme = "README.md"
+requires-python = ">=3.10"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [
+  { name = "Yuheng" }
+]
+keywords = ["hermes", "plugin", "audit", "memory", "governance"]
+classifiers = [
+  "Development Status :: 5 - Production/Stable",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+]
+
+[tool.setuptools]
+include-package-data = true
+py-modules = []
+packages = ["turn_closure_audit"]
+package-dir = {"turn_closure_audit" = "."}
+
+[tool.setuptools.package-data]
+"*" = ["LICENSE"]
+
+[tool.setuptools.data-files]
+"" = ["plugin.yaml", "README.md", "DESIGN.md", "CHANGELOG.md"]
+"docs" = ["docs/*.md"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
