@@ -1,5 +1,5 @@
 name: turn-closure-audit
-version: 2.5.0
+version: 1.0.2
 description: "Per-turn closure audit trail with conservative automatic sedimentation: every completed turn writes an auditable judgment plus structured redacted low-risk daily-note/review candidate sinks with safer write detection."
 author: "Yuheng / Hermes"
 hooks:

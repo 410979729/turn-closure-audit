@@ -11,15 +11,19 @@ PLUGIN_DIR = Path(__file__).resolve().parents[1]
 HERMES_HOME_ROOT = Path(__file__).resolve().parents[3]
 HERMES_AGENT_ROOT = HERMES_HOME_ROOT / "hermes-agent"
 
-if str(HERMES_AGENT_ROOT) not in sys.path:
-    sys.path.insert(0, str(HERMES_AGENT_ROOT))
-
 
 def _load_plugin_module():
+    if HERMES_AGENT_ROOT.exists() and str(HERMES_AGENT_ROOT) not in sys.path:
+        sys.path.insert(0, str(HERMES_AGENT_ROOT))
     module_name = f"turn_closure_audit_test_{id(object())}"
-    spec = importlib.util.spec_from_file_location(module_name, PLUGIN_DIR / "__init__.py")
+    spec = importlib.util.spec_from_file_location(
+        module_name,
+        PLUGIN_DIR / "__init__.py",
+        submodule_search_locations=[str(PLUGIN_DIR)],
+    )
     assert spec is not None and spec.loader is not None
     module = importlib.util.module_from_spec(spec)
+    sys.modules[module_name] = module
     spec.loader.exec_module(module)
     return module
 
@@ -135,7 +139,6 @@ def test_latest_snapshot_sanitizes_session_id_and_stays_under_latest_dir(plugin)
     assert latest_files[0].parent == plugin.latest_dir()
     assert latest_files[0].name == f"{plugin.safe_session_filename(session_id)}.json"
     assert not (plugin.paths.get_hermes_home() / "outside" / "probe.json").exists()
-
 
 
 def test_memory_write_event_marks_turn_as_written_and_redacts_preview(plugin):

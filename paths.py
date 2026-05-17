@@ -7,8 +7,20 @@ from pathlib import Path
 from typing import Any, Iterator, Optional
 
 import fcntl
+import os
 
-from hermes_constants import get_hermes_home
+try:
+    from hermes_constants import get_hermes_home
+except ModuleNotFoundError:  # pragma: no cover - exercised in standalone CI/imports
+    def get_hermes_home() -> Path:
+        """Fallback for standalone tests outside a Hermes checkout.
+
+        Hermes provides ``hermes_constants.get_hermes_home`` at runtime.  The
+        public plugin repository should still be importable and testable in a
+        clean checkout, so use the same environment-variable convention when the
+        host Hermes package is not installed.
+        """
+        return Path(os.environ.get("HERMES_HOME", Path.home() / ".hermes")).expanduser()
 
 
 def audit_root() -> Path:
