@@ -4,6 +4,8 @@ import json
 import threading
 from typing import Any, Dict, List, Optional
 
+from .candidate_ledger import append_candidate_jsonl
+from .candidate_schema import build_review_candidate
 from .clock import today_str
 from .paths import audit_log_path, display_path, latest_dir, locked_file, memory_day_path, review_candidate_path, safe_session_filename
 
@@ -71,31 +73,34 @@ def append_review_candidate(record: Dict[str, Any]) -> Optional[Dict[str, Any]]:
     if not record.get("candidate"):
         return None
 
+    candidate = build_review_candidate(record)
+    if candidate is None:
+        return None
+
     day = record.get("judged_at", "")[:10] or today_str()
     path = review_candidate_path(day)
+    review_deduped = False
     with FILE_LOCK:
         with locked_file(path) as fh:
             record_id = str(record.get("record_id", "") or "")
             existing = fh.read()
-            if record_id and record_id in existing:
-                return {"kind": "review-candidate", "path": display_path(path), "deduped": True}
+            if (record_id and record_id in existing) or candidate.candidate_id in existing:
+                review_deduped = True
+            else:
+                append_candidate_jsonl(fh, candidate)
 
-            candidate_record = {
-                "assistant_preview": record.get("assistant_preview", ""),
-                "candidate_reason": record.get("candidate_reason", ""),
-                "classification": record.get("classification", ""),
-                "judged_at": record.get("judged_at", ""),
-                "platform": record.get("platform", ""),
-                "recommended_sinks": record.get("recommended_sinks", []),
-                "record_id": record_id,
-                "session_id": record.get("session_id", ""),
-                "status": record.get("status", ""),
-                "tool_events": record.get("tool_events", 0),
-                "user_preview": record.get("user_preview", ""),
-            }
-            fh.seek(0, 2)
-            fh.write(json.dumps(candidate_record, ensure_ascii=False, sort_keys=True) + "\n")
-            return {"kind": "review-candidate", "path": display_path(path), "deduped": False}
+    from .candidate_ledger import append_candidate_created
+
+    ledger_result = append_candidate_created(candidate)
+    return {
+        "kind": "review-candidate",
+        "path": display_path(path),
+        "deduped": review_deduped,
+        "candidate_id": candidate.candidate_id,
+        "candidate_status": candidate.status,
+        "final_sink": candidate.final_sink,
+        "ledger": ledger_result,
+    }
 
 
 def auto_sink(record: Dict[str, Any]) -> List[Dict[str, Any]]:

@@ -17,7 +17,12 @@ The plugin is split into small public modules while keeping Hermes' required roo
 - `paths.py` owns profile-safe output paths and session-id filename hardening
 - `redaction.py` owns preview normalization and best-effort secret masking
 - `classification.py` owns explainable candidate heuristics
-- `storage.py` owns file locking and all audit/daily-note/review-candidate writes
+- `candidate_schema.py` owns the structured candidate and event schema, deterministic candidate ids, final sinks, statuses, risk, confidence, and compatibility aliases
+- `candidate_ledger.py` owns the append-only candidate event log, materialized current views, terminal transitions, receipt attachment helpers, and pending/overdue reporting
+- `receipts.py` owns normalized promotion, merge, rejection, confirmation, and expiry receipt dictionaries
+- `promotion.py` owns dry-run promotion buckets and explicit opt-in promotion using only injected/fakeable writers
+- `distillation.py` owns the no-write semantic candidate extraction interface for injected model clients
+- `storage.py` owns file locking and all audit/daily-note/review-candidate compatibility writes
 - `commands.py` owns `/turn-closure` output formatting
 - `clock.py` owns timezone-aware timestamp helpers
 - `turn_closure_audit.py` provides a package-compatible import shim for wheel installs
@@ -85,6 +90,14 @@ Per-session overwrite file:
 
 The filename is normalized and suffixed with a short digest derived from the raw session id so path traversal and hostile filename characters cannot escape the `latest/` directory.
 
+### Candidate event ledger
+
+Authoritative append-only JSONL:
+
+- `$HERMES_HOME/turn.closure.audit/candidates/events/<YYYY-MM-DD>.jsonl`
+
+The event ledger is the source of truth for candidate lifecycle. Duplicate `candidate.created` events are idempotent; terminal candidates do not transition again. Materialized views are derived by replaying events.
+
 ### Daily note sink
 
 Human-readable markdown:
@@ -93,9 +106,22 @@ Human-readable markdown:
 
 ### Review candidate sink
 
-Structured JSONL for later triage:
+Structured JSONL compatibility output for later triage:
 
 - `$HERMES_HOME/knowledge/review/turn-closure-candidates-<YYYY-MM-DD>.jsonl`
+
+Review files are evidence and compatibility output, not final memory and not the authoritative lifecycle ledger. Each new-format candidate mirrors the ledger schema and includes:
+
+- `candidate_id`: stable `tcand_...` id derived from normalized `candidate_content + final_sink + classification`; `record_id` is provenance only
+- `candidate_content`: concise redacted candidate text suitable for promotion review
+- `status` / `candidate_status`: starts as `pending`
+- `final_sink`: one of `user`, `memory`, `project`, `ops`, `skill`, `knowledge`, `discard`, or `ask_user`
+- `recommended_sink`: deprecated compatibility alias equal to `final_sink`
+- `risk` and `confidence`: conservative governance hints for promotion logic
+- `receipt`: `null` until a later promotion / merge / rejection writes a verifiable receipt
+- `evidence_summary` and `source`: small redacted evidence, not a full transcript
+
+Terminal candidate states are intentionally explicit: `promoted`, `merged`, `rejected_noise`, `rejected_temporary`, `rejected_sensitive`, `needs_user_confirmation`, and `expired`.
 
 ## Deduping strategy
 
@@ -108,7 +134,27 @@ The plugin constructs a stable `record_id` from:
 Sink writers check for prior presence of that record before appending.
 
 Daily-note entries use an HTML sentinel comment for dedupe.
-Review-candidate entries dedupe by `record_id` search in the target file.
+Review-candidate entries dedupe by `candidate_id` and keep `record_id` only as provenance.
+Candidate ledger creation is independently idempotent: a duplicate `candidate.created` event for the same `candidate_id` does not create a second pending item.
+
+## Promotion and receipt model
+
+Promotion is conservative and dry-run first. The default report buckets are `would_promote`, `needs_confirmation`, `suggest_skill`, `suggest_knowledge`, `would_reject`, `conflicts`, and `already_satisfied`.
+
+Default policy:
+
+- low-risk explicit user preferences can be recommended for promotion, but writes require explicit opt-in and an injected writer
+- workflow/procedure candidates are suggested for skill/knowledge curation rather than silently written
+- temporary runtime/service state is rejected as temporary
+- secret-shaped candidates are rejected as sensitive
+- conflicts require user confirmation
+- equivalent durable memory is treated as already satisfied / merged
+
+Receipts record the outcome (`promoted`, `merged`, rejection, confirmation, expiry) and are attached through terminal ledger events. `scope-recall` is the optional recommended companion for durable storage receipts; this plugin does not require it to run.
+
+## Distillation interface
+
+`distillation.py` exposes `extract_semantic_candidates(turn, *, model_client=None) -> list[CandidateRecord]`. It never writes files or memory and does not pick or switch models. Tests inject deterministic fake clients; runtime integrations must use existing Hermes configuration if they later call a model.
 
 ## Redaction model
 

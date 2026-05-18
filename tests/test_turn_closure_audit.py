@@ -115,6 +115,23 @@ def test_on_session_end_writes_audit_daily_note_and_review_candidate(plugin):
     ]
     assert len(candidate_rows) == 1
     assert candidate_rows[0]["record_id"] == record["record_id"]
+    assert candidate_rows[0]["candidate_id"].startswith("tcand_")
+    assert candidate_rows[0]["status"] == "pending"
+    assert candidate_rows[0]["candidate_status"] == "pending"
+    assert candidate_rows[0]["final_sink"] in {"user", "knowledge"}
+    assert candidate_rows[0]["recommended_sink"] == candidate_rows[0]["final_sink"]
+    assert candidate_rows[0]["risk"] in {"low", "medium"}
+    assert isinstance(candidate_rows[0]["confidence"], float)
+    assert candidate_rows[0]["candidate_content"]
+    assert candidate_rows[0]["receipt"] is None
+    assert candidate_rows[0]["source"]["user_preview"]
+
+    ledger_day = record["judged_at"][:10]
+    ledger_path = plugin.paths.candidate_event_path(ledger_day)
+    ledger_rows = [json.loads(line) for line in ledger_path.read_text(encoding="utf-8").splitlines()]
+    assert len(ledger_rows) == 1
+    assert ledger_rows[0]["event_type"] == "candidate.created"
+    assert ledger_rows[0]["candidate_id"] == candidate_rows[0]["candidate_id"]
 
 
 def test_latest_snapshot_sanitizes_session_id_and_stays_under_latest_dir(plugin):

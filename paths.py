@@ -51,6 +51,14 @@ def review_candidate_path(day: Optional[str] = None, *, today: str = "") -> Path
     return get_hermes_home() / "knowledge" / "review" / f"turn-closure-candidates-{day}.jsonl"
 
 
+def candidate_event_path(day: Optional[str] = None, *, today: str = "") -> Path:
+    if not day:
+        if not today:
+            raise ValueError("day or today must be provided")
+        day = today
+    return audit_root() / "candidates" / "events" / f"{day}.jsonl"
+
+
 def session_key(session_id: str) -> str:
     return session_id or "unknown-session"
 

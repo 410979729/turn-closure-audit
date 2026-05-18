@@ -15,10 +15,11 @@ Under the active Hermes profile:
 
 - `$HERMES_HOME/turn.closure.audit/turns.jsonl`
 - `$HERMES_HOME/turn.closure.audit/latest/<sanitized-session-id>--<sha1>.json`
+- `$HERMES_HOME/turn.closure.audit/candidates/events/<YYYY-MM-DD>.jsonl`
 - `$HERMES_HOME/memory/<YYYY-MM-DD>.md`
 - `$HERMES_HOME/knowledge/review/turn-closure-candidates-<YYYY-MM-DD>.jsonl`
 
-The latest snapshot filename is derived from the session id through a filename-safe mapping, so hostile session identifiers cannot escape the `latest/` directory.
+The append-only candidate event ledger is the authoritative candidate truth. Daily notes and review JSONL are compatibility/evidence surfaces only; writing there does **not** mean a candidate became durable memory. The latest snapshot filename is derived from the session id through a filename-safe mapping, so hostile session identifiers cannot escape the `latest/` directory.
 
 ## Installation assumption for Hermes users
 
@@ -46,6 +47,11 @@ Important boundary:
 - `classification.py` — explainable candidate classification heuristics
 - `storage.py` — locked JSONL, latest snapshot, daily-note, and review-candidate writers
 - `commands.py` — `/turn-closure` command formatting
+- `candidate_schema.py` — structured candidate records/events, final sinks, terminal statuses, deterministic IDs, risk/confidence helpers
+- `candidate_ledger.py` — append-only candidate event ledger, materialized views, transitions, pending/overdue reports
+- `receipts.py` — normalized promotion / merge / rejection receipts
+- `promotion.py` — dry-run and explicit opt-in promotion decision engine with injected writers only
+- `distillation.py` — no-write semantic candidate extraction interface for injected/fake model clients
 - `clock.py` — timezone-aware timestamps
 
 ## Hook model
@@ -100,9 +106,18 @@ The plugin registers:
 ```text
 /turn-closure [recent|last|status] [N]
 /turn-closure path
+/turn-closure pending [N]
+/turn-closure report
+/turn-closure promote --dry-run [--candidate ID]
 ```
 
-This gives a lightweight runtime view into the most recent judgments without opening the raw files manually.
+This gives a lightweight runtime view into recent judgments, pending candidates, overdue counts, and promotion dry-runs without opening raw files manually. Actual durable writes are disabled by default and require an explicit caller-provided writer/adapter.
+
+## Candidate governance
+
+Candidate records carry `candidate_content`, `classification`, `final_sink`, `risk`, `confidence`, status, evidence summary, and optional receipt. Allowed final sinks are `user`, `memory`, `project`, `ops`, `skill`, `knowledge`, `discard`, and `ask_user`; review JSONL, daily notes, and the candidate ledger are not final sinks.
+
+Every candidate starts `pending` and should eventually become `promoted`, `merged`, `rejected_noise`, `rejected_temporary`, `rejected_sensitive`, `needs_user_confirmation`, or `expired`. Promotion dry-runs bucket candidates into `would_promote`, `needs_confirmation`, `suggest_skill`, `suggest_knowledge`, `would_reject`, `conflicts`, and `already_satisfied`. Low-risk user preferences may be recommended for promotion, but auto-promotion is opt-in only and hidden writes are intentionally not implemented. `scope-recall` is the recommended durable-memory companion when installed, but this plugin works standalone as audit and governance evidence.
 
 ## Test coverage
 
@@ -111,7 +126,10 @@ The included tests currently cover:
 - preview redaction of secret-like values
 - write-event extraction for retention-safe patch paths
 - session-end audit + daily-note + review-candidate emission
-- explicit memory-write detection and preview redaction
+- candidate schema/event roundtrip and validation
+- append-only candidate ledger materialization, terminal transitions, and pending/overdue reports
+- dry-run promotion buckets, idempotent opt-in promotion, receipts, and no hidden writes
+- semantic distillation with deterministic fake model clients
 
 ## Packaging boundary
 
@@ -125,4 +143,4 @@ Important boundary:
 ## Current limitations
 
 - candidate classification is intentionally heuristic and conservative
-- this plugin records governance evidence; it does not decide final long-term memory promotion by itself
+- this plugin records governance evidence; durable memory promotion requires terminal candidate events plus receipts

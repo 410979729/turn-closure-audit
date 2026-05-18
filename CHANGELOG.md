@@ -2,6 +2,20 @@
 
 All notable changes to `turn-closure-audit` will be documented in this file.
 
+## [Unreleased]
+
+### Added
+- Added `candidate_schema.py` with `CandidateRecord` / `CandidateEvent`, contract final sinks, terminal statuses, required `candidate_content`, deterministic content/sink/classification IDs, and legacy `recommended_sink` / `candidate_status` serialization aliases.
+- Added `candidate_ledger.py` as the append-only source-of-truth candidate event ledger under `turn.closure.audit/candidates/events/<day>.jsonl`, with replay/materialization, idempotent creation, terminal transition no-ops, and pending/overdue reports.
+- Added `receipts.py` and `promotion.py` for normalized receipts, dry-run promotion buckets, conflict/sensitive/temporary/equivalent-memory handling, and explicit opt-in promotion through injected writers only.
+- Added `distillation.py` as a no-write semantic candidate extraction interface that supports deterministic fake model clients without hardcoding or switching models.
+- Added tests for candidate schema validation/roundtrip, ledger transitions/reporting, promotion idempotency/receipts, distillation, and authoritative ledger event emission from compatibility review writes.
+
+### Changed
+- Review-candidate JSONL remains backward-compatible but now includes `candidate_id`, `candidate_status`, `final_sink`, `recommended_sink`, `risk`, `confidence`, `candidate_content`, and `receipt`; authoritative `candidate.created` events are written to the candidate ledger.
+- `/turn-closure` now exposes `pending`, `report`, and dry-run `promote` surfaces in addition to recent/path inspection.
+- Updated release gate and design docs to include candidate governance, receipts, no-hidden-write promotion, and distillation modules.
+
 ## [1.0.2] - 2026-05-17
 
 ### Changed

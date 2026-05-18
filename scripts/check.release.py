@@ -31,9 +31,14 @@ REQUIRED_MODULES = [
     "classification.py",
     "storage.py",
     "commands.py",
+    "candidate_schema.py",
+    "candidate_ledger.py",
+    "receipts.py",
+    "promotion.py",
+    "distillation.py",
     "clock.py",
 ]
-REQUIRED_DOCS = ["docs/architecture.md"]
+REQUIRED_DOCS = ["docs/architecture.md", "docs/memory.stack.contract.md"]
 GENERATED_NAMES = {"__pycache__", ".pytest_cache", ".ruff_cache", "build", "dist", "turn_closure_audit.egg-info"}
 SECRET_PATTERNS = [
     re.compile(r"(?i)(api[_-]?key|secret|token|password|passwd|authorization|bearer)\s*[:=]\s*(?!\$\{|public-test|\[REDACTED\])[A-Za-z0-9._~+/-]{12,}"),
@@ -122,7 +127,7 @@ def main():
     bad_wheel = [name for name in names if "__pycache__" in name or name.endswith(".pyc")]
     if bad_wheel:
         fail("wheel contains cache artifacts", bad_wheel)
-    for expected in ["turn_closure_audit/__init__.py", "turn_closure_audit/runtime.py", "plugin.yaml", "README.md", "DESIGN.md", "CHANGELOG.md", "SECURITY.md", "docs/architecture.md"]:
+    for expected in ["turn_closure_audit/__init__.py", "turn_closure_audit/runtime.py", "turn_closure_audit/candidate_schema.py", "turn_closure_audit/candidate_ledger.py", "turn_closure_audit/promotion.py", "turn_closure_audit/receipts.py", "turn_closure_audit/distillation.py", "plugin.yaml", "README.md", "DESIGN.md", "CHANGELOG.md", "SECURITY.md", "docs/architecture.md", "docs/memory.stack.contract.md"]:
         if not has_payload(expected):
             fail("wheel missing expected payload", expected)
 
