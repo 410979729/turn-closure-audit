@@ -4,7 +4,7 @@ All notable changes to `turn-closure-audit` will be documented in this file.
 
 ## [Unreleased]
 
-## [1.1.0] - 2026-05-18
+## [1.0.3] - 2026-05-18
 
 ### Added
 - Added `candidate_schema.py` with `CandidateRecord` / `CandidateEvent`, contract final sinks, terminal statuses, required `candidate_content`, deterministic content/sink/classification IDs, and legacy `recommended_sink` / `candidate_status` serialization aliases.

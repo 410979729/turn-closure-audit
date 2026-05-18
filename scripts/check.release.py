@@ -10,7 +10,7 @@ import zipfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-VERSION = "1.1.0"
+VERSION = "1.0.3"
 WHEEL_NAME = f"turn_closure_audit-{VERSION}-py3-none-any.whl"
 REQUIRED_ROOT_FILES = [
     "README.md",
