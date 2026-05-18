@@ -7,6 +7,7 @@ This contract defines how `scope-recall` and `turn-closure-audit` cooperate with
 | Contract version | scope-recall | turn-closure-audit | Status |
 |---|---:|---:|---|
 | 0.1 | >= 1.0.1 | >= 1.0.2 | Planning baseline; candidate/receipt protocol documented, not fully implemented |
+| 1.1 | >= 1.1.0 | >= 1.1.0 | Implemented candidate ledger, receipts, promotion dry-run, manual-write hygiene, and general/vector isolation |
 
 Rules:
 
